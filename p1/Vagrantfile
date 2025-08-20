@@ -1,0 +1,56 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  BOX_IMAGE = "ubuntu/xenial64"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.cpus = 1
+    vb.memory = 1024 
+  end
+
+  config.vm.box_check_update = false
+
+  # Server (controller node)
+  config.vm.define "etlawS" do |server|
+    server.vm.box = BOX_IMAGE
+    server.vm.hostname = "etlawS"
+    
+    server.vm.network "private_network", ip: "192.168.56.110"
+
+    server.vm.provision "shell", inline: <<-SHELL
+ 
+      sudo apt-get update -y
+      sudo apt-get install -y curl apt-transport-https
+
+      curl -sfL https://get.k3s.io | sh -
+
+      sudo ln -sf /usr/local/bin/kubectl /usr/bin/kubectl
+
+      sudo cat /var/lib/rancher/k3s/server/node-token > /vagrant/node-token
+    SHELL
+  end
+
+  # Worker (agent node)
+  config.vm.define "etlawSW" do |worker|
+    worker.vm.box = BOX_IMAGE
+    worker.vm.hostname = "etlawSW"
+
+    worker.vm.network "private_network", ip: "192.168.56.111"
+
+    worker.vm.provision "shell", inline: <<-SHELL
+      sudo apt-get update -y
+      sudo apt-get install -y curl apt-transport-https
+
+      while [ ! -f /vagrant/node-token ]; do
+        echo "Waiting for join token from etlawS..."
+        sleep 5
+      done
+
+   		K3S_URL="https://192.168.56.10:6443"
+		K3S_TOKEN=$(cat /vagrant/node-token)
+		curl -sfL https://get.k3s.io | K3S_URL=$K3S_URL K3S_TOKEN=$K3S_TOKEN sh -
+    SHELL
+  end
+end
