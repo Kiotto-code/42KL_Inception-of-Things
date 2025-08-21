@@ -18,7 +18,7 @@ spec:
       - name: app-one
         image: paulbouwer/hello-kubernetes:1.10
         ports:
-        - containerPort: 5000
+        - containerPort: 8080
           name: app-one-port
         env:
         - name: MESSAGE
@@ -44,7 +44,7 @@ spec:
       - name: app-two
         image: paulbouwer/hello-kubernetes:1.10
         ports:
-        - containerPort: 5000
+        - containerPort: 8080
           name: app-two-port
         env:
         - name: MESSAGE
@@ -70,7 +70,7 @@ spec:
       - name: app-three
         image: paulbouwer/hello-kubernetes:1.10
         ports:
-        - containerPort: 5000
+        - containerPort: 8080
           name: app-three-port
         env:
         - name: MESSAGE
