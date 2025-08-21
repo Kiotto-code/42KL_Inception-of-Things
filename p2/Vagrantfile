@@ -1,0 +1,58 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  BOX_IMAGE = "ubuntu/xenial64"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.cpus = 1
+    vb.memory = 1024 
+  end
+  
+  config.vm.box_check_update = false
+  
+  config.vm.define "yichanS" do |server|
+    server.vm.box = BOX_IMAGE
+    server.vm.hostname = "yichanS"
+    
+    server.vm.network "private_network", ip: "192.168.56.110"
+    # server.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+
+
+    server.vm.provision "shell", inline: <<-SHELL
+ 
+      sudo apt-get update -y
+      sudo apt-get install -y curl apt-transport-https
+
+      curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=192.168.56.110" sh -
+
+      sudo ln -sf /usr/local/bin/kubectl /usr/bin/kubectl      
+      sudo cat /var/lib/rancher/k3s/server/node-token > /vagrant/node-token
+      # kubectl apply -f /vagrant/conf
+      mkdir -p /home/vagrant/.kube
+      k3s kubectl config view >> /home/vagrant/.kube/config
+
+      # echo "Congig bashrc"
+      # echo 'export KUBECONFIG=~/.kube/config' >> /home/vagrant/.bashrc
+      # echo 'alias k=kubectl' >> /home/vagrant/.bashrc
+      # chown --recursive vagrant:vagrant /home/vagrant
+
+      chown --recursive vagrant:vagrant /etc/rancher/k3s
+
+
+    SHELL
+    server.vm.provision "shell", inline: <<-SHELL, run: "always"
+      echo "Configuring bashrc"
+      echo 'export KUBECONFIG=~/.kube/config' >> /home/vagrant/.bashrc
+      echo 'alias k=kubectl' >> /home/vagrant/.bashrc
+      source /home/vagrant/.bashrc
+      chown --recursive vagrant:vagrant /home/vagrant
+    SHELL
+
+    server.vm.provision "shell", inline: <<-SHELL
+      kubectl apply -f /vagrant/conf
+      # kubectl rollout status deployment/traefik -n kube-system
+    SHELL
+  end
+end
