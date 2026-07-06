@@ -4,10 +4,12 @@
 Vagrant.configure("2") do |config|
 
   BOX_IMAGE = "ubuntu/xenial64"
+  K3S_VERSION = "v1.24.15+k3s1"
 
   config.vm.provider "virtualbox" do |vb|
     vb.cpus = 1
-    vb.memory = 1024 
+    vb.memory = 1024
+    vb.customize ["modifyvm", :id, "--uartmode1", "disconnected"]
   end
   
   config.vm.box_check_update = false
@@ -25,7 +27,7 @@ Vagrant.configure("2") do |config|
       sudo apt-get update -y
       sudo apt-get install -y curl apt-transport-https
 
-      curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=192.168.56.110" sh -
+      curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="#{K3S_VERSION}" INSTALL_K3S_EXEC="--node-ip=192.168.56.110" sh -
 
       sudo ln -sf /usr/local/bin/kubectl /usr/bin/kubectl      
       sudo cat /var/lib/rancher/k3s/server/node-token > /vagrant/node-token

@@ -4,10 +4,12 @@
 Vagrant.configure("2") do |config|
 
   BOX_IMAGE = "ubuntu/xenial64"
+  K3S_VERSION = "v1.24.15+k3s1"
 
   config.vm.provider "virtualbox" do |vb|
     vb.cpus = 1
-    vb.memory = 1024 
+    vb.memory = 1024
+    vb.customize ["modifyvm", :id, "--uartmode1", "disconnected"]
   end
 
   config.vm.box_check_update = false
@@ -24,7 +26,7 @@ Vagrant.configure("2") do |config|
       sudo apt-get update -y
       sudo apt-get install -y curl apt-transport-https
 
-      curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=192.168.56.110" sh -
+      curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="#{K3S_VERSION}" INSTALL_K3S_EXEC="--node-ip=192.168.56.110" sh -
 
       sudo ln -sf /usr/local/bin/kubectl /usr/bin/kubectl
 
@@ -50,7 +52,7 @@ Vagrant.configure("2") do |config|
 
    		K3S_URL="https://192.168.56.110:6443"
 		K3S_TOKEN=$(cat /vagrant/node-token)
-		curl -sfL https://get.k3s.io | K3S_URL=$K3S_URL K3S_TOKEN=$K3S_TOKEN INSTALL_K3S_EXEC="--node-ip=192.168.56.111" sh -
+		curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="#{K3S_VERSION}" K3S_URL=$K3S_URL K3S_TOKEN=$K3S_TOKEN INSTALL_K3S_EXEC="--node-ip=192.168.56.111" sh -
     SHELL
   end
 end
