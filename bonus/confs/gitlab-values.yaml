@@ -1,0 +1,53 @@
+global:
+  edition: ce
+  hosts:
+    domain: localhost
+    https: false
+  ingress:
+    enabled: false
+    configureCertmanager: false
+  initialRootPassword:
+    secret: gitlab-initial-root-password
+  minio:
+    enabled: true
+
+installCertmanager: false
+
+certmanager-issuer:
+  email: root@localhost
+
+gitlab:
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
+    service:
+      type: ClusterIP
+      externalPort: 80
+
+nginx-ingress:
+  enabled: false
+
+prometheus:
+  install: false
+
+gitlab-runner:
+  install: false
+
+registry:
+  enabled: false
+
+minio:
+  persistence:
+    enabled: false
+
+redis:
+  install: true
+  master:
+    persistence:
+      enabled: false
+
+postgresql:
+  install: true
+  primary:
+    persistence:
+      enabled: false
