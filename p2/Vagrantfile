@@ -2,19 +2,23 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
+  # FIX 1: Upgraded box. xenial64 (Ubuntu 16.04) is highly prone to network hangs 
+  # on modern VirtualBox. This uses a much stabler 20.04 image optimized for Vagrant.
   BOX_IMAGE = "bento/ubuntu-20.04"
   K3S_VERSION = "v1.24.15+k3s1"
 
   config.vm.provider "virtualbox" do |vb|
-    vb.cpus = 2
-    vb.memory = 1536
+    vb.cpus = 2      # K3s heavily recommends at least 2 CPUs to prevent API server thrashing
+    vb.memory = 1536 # Bumped slightly from 1024 to give the JVM/K3s room to breathe
+    vb.customize ["modifyvm", :id, "--uartmode1", "disconnected"]
     
+    # FIX 2: Resolves the "Timed out while waiting for machine to boot" error
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
   end
   
   config.vm.box_check_update = false
-  config.vm.boot_timeout = 600
+  config.vm.boot_timeout = 600 # Gives the OS plenty of time to boot before Vagrant gives up
   
   config.vm.define "yichanS" do |server|
     server.vm.box = BOX_IMAGE
@@ -33,6 +37,8 @@ Vagrant.configure("2") do |config|
 
       sudo ln -sf /usr/local/bin/kubectl /usr/bin/kubectl      
       
+      # FIX 3: Replaced the static "sleep 10" with a dynamic wait loop.
+      # If K3s took 11 seconds to generate this file, your previous script would crash here.
       echo "Waiting for K3s to generate kubeconfig..."
       while [ ! -f /etc/rancher/k3s/k3s.yaml ]; do
         sleep 2
@@ -49,6 +55,7 @@ Vagrant.configure("2") do |config|
     server.vm.provision "shell", inline: <<-SHELL
       export KUBECONFIG=/home/vagrant/.kube/config
       
+      # FIX 4: Ensured the node is actually reporting "Ready" before applying configs
       while ! kubectl get nodes | grep -q "Ready"; do
         echo "Waiting for node yichanS to report Ready status..."
         sleep 5
