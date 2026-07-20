@@ -6,3 +6,17 @@ or
 ```
 curl -H "Host:app2.com" 192.168.56.110
 ```
+
+Check whether app2 load balancing is working
+```
+kubectl get pods -l app=app-two
+for i in {1..10}; do curl -s -H "Host: app2.com" 192.168.56.110; echo; done
+for i in {1..10}; do curl -s -H "Host: app2.com" 192.168.56.110 | grep -oP '(?<=<td>).*?(?=</td>)'; echo "---"; done
+```
+
+
+DNS routing for your virtual machine
+```
+--natdnshostresolver1 "on": Tells the virtual machine to use your host computer's (your laptop's) DNS system to resolve website names, rather than trying to look them up independently.
+--natdnsproxy1 "on": Forces all DNS requests made by the VM to proxy directly through your host machine's active network connection.
+```
