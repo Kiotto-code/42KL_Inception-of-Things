@@ -7,8 +7,19 @@ CLUSTER_NAME="iot-cluster"
 
 echo "[1/5] Installing system dependencies"
 sudo apt-get update -y
-sudo apt-get install -y docker.io curl git
+sudo apt-get install -y curl git
+
+# Prefer already-installed Docker CE (docker.com). Avoid docker.io — it
+# conflicts with containerd.io from the official Docker apt repository.
+if ! command -v docker >/dev/null 2>&1; then
+	if apt-cache show docker-ce >/dev/null 2>&1; then
+		sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+	else
+		sudo apt-get install -y docker.io
+	fi
+fi
 sudo systemctl enable docker --now
+sudo usermod -aG docker "$USER" 2>/dev/null || true
 
 echo "[2/5] Installing kubectl and k3d"
 curl -fsSL -o kubectl "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
